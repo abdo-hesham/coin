@@ -14,7 +14,6 @@ const segEase = (a, b, t) => easeIO(t);
 const introEase = gsap.parseEase('expo.inOut');
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-document.body.classList.add('is-loading');
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 
 /* ---------------- CSS fallback coin ---------------- */
@@ -484,12 +483,16 @@ function updateLayers() {
 const loaderEl = $('.loader');
 const loaderCoin = $('.loader-coin');
 const loaderNum = $('.loader-num');
-const load = { real: 0, shown: 0, t0: performance.now() };
-const MIN_LOADER = reduceMotion ? 0.2 : 0.9; // seconds
+const load = { real: 0, shown: 0, t0: 0 }; // loader has been on screen since navigation start
+const MIN_LOADER = reduceMotion ? 0.2 : 0.5; // seconds
 
-const loaderSpin = gsap.to(loaderCoin, { rotationY: '+=360', duration: 2.6, ease: 'none', repeat: -1 });
-gsap.fromTo(loaderCoin, { y: -4 }, { y: 4, duration: 1.6, ease: 'sine.inOut', repeat: -1, yoyo: true });
-gsap.from(['.loader-stage', '.loader-word', '.loader-pct'], { opacity: 0, y: 14, duration: 1.1, ease: 'power3.out', stagger: 0.08 });
+// the loader coin spins with a CSS animation (it runs before any script arrives); read its angle at hand-off
+const loaderSpinAngle = () => {
+  const anim = loaderCoin.getAnimations().find((a) => a.animationName === 'loader-spin');
+  if (!anim || anim.currentTime == null) return 0;
+  const dur = anim.effect.getTiming().duration || 2600;
+  return ((anim.currentTime % dur) / dur) * 360;
+};
 
 function tickLoader() {
   const elapsed = (performance.now() - load.t0) / 1000;
@@ -501,7 +504,11 @@ function tickLoader() {
 }
 
 function loadAssets() {
-  // only what the first screen needs; everything below the fold is lazy and warmed up after the intro
+  // first screen only: the LCP image and loader coin are already in; add the rest of the hero art now
+  $$('img[data-hero]').forEach((img) => {
+    if (img.dataset.srcset) img.srcset = img.dataset.srcset;
+    img.src = img.dataset.src;
+  });
   const imgs = $$('img[src]');
   const tasks = imgs.length + 2;
   let done = 0;
@@ -561,20 +568,20 @@ function onFirstInteraction() {
 function startIntro() {
   const d = reduceMotion ? 0.01 : 1;
   // freeze the preloader coin and start the real coin in exactly the same place and pose
-  loaderSpin.pause();
+  const spinY = loaderSpinAngle();
+  loaderCoin.getAnimations().forEach((a) => a.pause());
   const r = loaderCoin.getBoundingClientRect();
-  const spinY = ((gsap.getProperty(loaderCoin, 'rotationY') % 360) + 360) % 360;
   intro.from = { x: r.left + r.width / 2, y: r.top + r.height / 2, d: r.width * DISC_LOADER, ry: spinY };
   intro.p = 0;
   intro.active = true;
-    gsap.set(loaderCoin, { opacity: 0 });
+  gsap.set(loaderCoin, { opacity: 0 });
 
   const tl = gsap.timeline({
     onComplete: () => { intro.active = false; loaderEl.style.display = 'none'; introDone = true; if (interacted) onFirstInteraction(); },
   });
   tl.to(['.loader-word', '.loader-pct'], { opacity: 0, y: -10, duration: 0.4 * d, ease: 'power2.in', stagger: 0.04 }, 0)
-    .to(loaderEl, { opacity: 0, duration: 0.7 * d, ease: 'power2.inOut' }, 0.1 * d)
-    .to(intro, { p: 1, duration: 1.5 * d, ease: 'none' }, 0.05 * d)
+    .to(loaderEl, { opacity: 0, duration: 0.55 * d, ease: 'power2.inOut' }, 0.05 * d)
+    .to(intro, { p: 1, duration: 1.3 * d, ease: 'none' }, 0.05 * d)
     .fromTo('.h-layer img', { scale: 1.12 }, { scale: 1, duration: 2 * d, ease: 'expo.out', stagger: 0.08 * d }, 0.1 * d)
     .from('.hero-title .line-inner', { yPercent: 110, duration: 1.4 * d, ease: 'expo.out', stagger: 0.12 * d }, 0.5 * d)
     .from('.nav', { opacity: 0, y: -14, duration: 1 * d, ease: 'power3.out' }, 0.7 * d);
@@ -583,7 +590,7 @@ function startIntro() {
 // fetch below-the-fold images while the visitor is still reading the hero
 // below-the-fold images carry data-src/data-srcset and are fetched once the visitor starts
 // scrolling (or when one gets near the viewport), so they never compete with the first screen
-const deferredImgs = $$('img[data-src]');
+const deferredImgs = $$('img[data-src]:not([data-hero])');
 const loadImg = (img) => {
   if (!img.dataset.src) return;
   if (img.dataset.srcset) img.srcset = img.dataset.srcset;

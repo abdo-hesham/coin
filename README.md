@@ -15,10 +15,12 @@ The libraries are self-hosted in `vendor/`, so the page makes no third-party scr
 
 ## Performance
 
-- Fonts load without blocking the first paint.
-- Phones get smaller image variants through `srcset`.
-- Images below the fold load only once the visitor starts scrolling.
-- Mobile Lighthouse, measured locally: Performance 82–98, and 100 for Accessibility, Best Practices and SEO.
+- CSS is inlined in `index.html`, and the fonts are self-hosted, subset to the characters the page uses.
+- The first screen needs only the HTML, one font, the loader coin and the hero's largest image.
+- Scripts and the remaining hero art start after the first paint. The loader coin spins with CSS until then.
+- Phones get smaller image variants through `srcset`, and images below the fold load once scrolling starts.
+- `vercel.json` and `_headers` set long cache lifetimes on Vercel or Netlify.
+- Mobile Lighthouse, measured locally: Performance 94–96, and 100 for Accessibility, Best Practices and SEO.
 
 ## Run locally
 
@@ -32,9 +34,9 @@ Then open http://localhost:5178.
 
 ## Files
 
-- `index.html`: markup, preloader, and the import map for Three.js
-- `style.css`: layout, plus the tablet (≤1024px) and phone (≤760px) layouts
+- `index.html`: markup, all styles (including the tablet ≤1024px and phone ≤760px layouts), the preloader, the script bootstrap, and the import map for Three.js
 - `main.js`: smooth scroll, scroll scenes, the coin's path and preloader, and the story text flowing around the coin
 - `coin3d.js`: the WebGL coin
 - `assets/`: optimised WebP images, with smaller variants for phones
 - `vendor/`: GSAP, ScrollTrigger, Lenis and Three.js
+- `fonts/`: Newsreader, Inter and Pinyon Script (subset WOFF2)
