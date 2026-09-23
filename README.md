@@ -9,9 +9,16 @@ A single 3D coin travels through the whole page. It lands on anchors in each sec
 - Plain HTML, CSS and JavaScript (ES modules). There is no build step.
 - [GSAP](https://gsap.com/) and ScrollTrigger drive the scroll animations and the pinned sections.
 - [Lenis](https://lenis.darkroom.engineering/) provides the smooth scrolling.
-- [Three.js](https://threejs.org/) renders the coin. If WebGL is unavailable, the page falls back to a CSS 3D coin.
+- [Three.js](https://threejs.org/) renders the coin. The page starts with a lightweight CSS 3D coin and switches to the WebGL coin after the visitor's first interaction. If WebGL is unavailable, the CSS coin stays.
 
-All libraries load from jsDelivr.
+The libraries are self-hosted in `vendor/`, so the page makes no third-party script requests.
+
+## Performance
+
+- Fonts load without blocking the first paint.
+- Phones get smaller image variants through `srcset`.
+- Images below the fold load only once the visitor starts scrolling.
+- Mobile Lighthouse, measured locally: Performance 82–98, and 100 for Accessibility, Best Practices and SEO.
 
 ## Run locally
 
@@ -29,4 +36,5 @@ Then open http://localhost:5178.
 - `style.css`: layout, plus the tablet (≤1024px) and phone (≤760px) layouts
 - `main.js`: smooth scroll, scroll scenes, the coin's path and preloader, and the story text flowing around the coin
 - `coin3d.js`: the WebGL coin
-- `assets/`: optimised WebP images
+- `assets/`: optimised WebP images, with smaller variants for phones
+- `vendor/`: GSAP, ScrollTrigger, Lenis and Three.js

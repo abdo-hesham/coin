@@ -8,29 +8,25 @@
   <link rel="icon" href="assets/logo-coin.webp" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Newsreader:opsz,wght@6..72,200;6..72,300;6..72,400&family=Pinyon+Script&display=swap" rel="stylesheet" />
+  <!-- fonts load without blocking the first paint -->
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Newsreader:opsz,wght@6..72,200;6..72,300;6..72,400&family=Pinyon+Script&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Newsreader:opsz,wght@6..72,200;6..72,300;6..72,400&family=Pinyon+Script&display=swap" media="print" onload="this.media='all';this.dataset.loaded=1" />
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Newsreader:opsz,wght@6..72,200;6..72,300;6..72,400&family=Pinyon+Script&display=swap" /></noscript>
   <link rel="stylesheet" href="style.css" />
   <script type="importmap">
     { "imports": {
-        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js",
-        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+        "three": "./vendor/three.module.min.js"
     } }
   </script>
-  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="preload" as="image" href="assets/coin-front-sm.webp" fetchpriority="high" />
-  <link rel="preload" as="image" href="assets/coin-tex-front.webp" />
-  <link rel="preload" as="image" href="assets/coin-tex-back.webp" />
-  <link rel="preload" as="image" href="assets/column-dark.webp" />
-  <link rel="preload" as="image" href="assets/noble-dark.webp" />
-  <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js" />
-  <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/environments/RoomEnvironment.js" />
+  <link rel="preload" as="image" href="assets/carpet-dark-640.webp" imagesrcset="assets/carpet-dark-640.webp 640w, assets/carpet-dark-760.webp 760w, assets/carpet-dark.webp 1000w" imagesizes="(max-width: 760px) 84vw, 56vw" fetchpriority="high" />
 </head>
 <body>
   <div class="loader" aria-hidden="true">
     <div class="loader-stage">
       <div class="loader-coin">
-        <img class="loader-coin-face" src="assets/coin-front-sm.webp" alt="" fetchpriority="high" />
-        <img class="loader-coin-face loader-coin-face--back" src="assets/coin-back-sm.webp" alt="" />
+        <img class="loader-coin-face" src="assets/coin-front-sm.webp" alt="" width="360" height="360" fetchpriority="high" />
+        <img class="loader-coin-face loader-coin-face--back" src="assets/coin-back-sm.webp" alt="" width="360" height="360" />
       </div>
     </div>
     <p class="loader-word"><span>Still</span><em>carried</em></p>
@@ -54,8 +50,8 @@
   <div class="coin" id="coin" aria-hidden="true">
     <div class="coin-spin">
       <div class="coin-edge"></div>
-      <div class="coin-face coin-face--front"><img data-src="assets/coin-front-sm.webp" alt="" /></div>
-      <div class="coin-face coin-face--back"><img data-src="assets/coin-back-sm.webp" alt="" /></div>
+      <div class="coin-face coin-face--front"><img src="assets/coin-front-sm.webp" alt="" width="360" height="360" /></div>
+      <div class="coin-face coin-face--back"><img src="assets/coin-back-sm.webp" alt="" width="360" height="360" /></div>
     </div>
   </div>
 
@@ -63,10 +59,10 @@
     <!-- HERO -->
     <section class="hero" id="about">
       <div class="hero-layers">
-        <div class="h-layer h-column" data-depth="0.35"><img src="assets/column-dark.webp" fetchpriority="high" alt="" /></div>
-        <div class="h-layer h-noble" data-depth="0.25"><img src="assets/noble-dark.webp" fetchpriority="high" alt="" /></div>
-        <div class="h-layer h-carpet" data-depth="0.6"><img src="assets/carpet-dark.webp" fetchpriority="high" alt="" /></div>
-        <div class="h-layer h-stone" data-depth="0.7"><img src="assets/stone-dark.webp" fetchpriority="high" alt="" /></div>
+        <div class="h-layer h-column" data-depth="0.35"><img src="assets/column-dark-560.webp" srcset="assets/column-dark-560.webp 560w, assets/column-dark.webp 1000w" sizes="(max-width: 760px) 50vw, 34vw" width="1000" height="1250" alt="" /></div>
+        <div class="h-layer h-noble" data-depth="0.25"><img src="assets/noble-dark-600.webp" srcset="assets/noble-dark-600.webp 600w, assets/noble-dark.webp 1000w" sizes="(max-width: 760px) 70vw, 44vw" width="1000" height="1250" alt="" /></div>
+        <div class="h-layer h-carpet" data-depth="0.6"><img src="assets/carpet-dark-640.webp" srcset="assets/carpet-dark-640.webp 640w, assets/carpet-dark-760.webp 760w, assets/carpet-dark.webp 1000w" sizes="(max-width: 760px) 84vw, 56vw" width="1000" height="1250" fetchpriority="high" alt="" /></div>
+        <div class="h-layer h-stone" data-depth="0.7"><img src="assets/stone-dark-520.webp" srcset="assets/stone-dark-520.webp 520w, assets/stone-dark.webp 820w" sizes="(max-width: 760px) 62vw, 36vw" width="820" height="820" alt="" /></div>
         <div class="hero-vignette"></div>
       </div>
       <h1 class="hero-title">
@@ -95,7 +91,7 @@
       <h2 class="ch-title"><span class="line"><span class="line-inner">Forged</span></span></h2>
       <div class="ch-body">
         <figure class="arch arch--struck">
-          <div class="arch-inner"><img src="assets/workshop.webp" loading="lazy" decoding="async" alt="A craftsman striking coins at his workbench by candlelight" /></div>
+          <div class="arch-inner"><img data-src="assets/workshop-640.webp" data-srcset="assets/workshop-640.webp 640w, assets/workshop.webp 1000w" sizes="(max-width: 1024px) 76vw, 32vw" width="1000" height="1250" decoding="async" alt="A craftsman striking coins at his workbench by candlelight" /></div>
           <div class="anchor anchor--struck" id="a-struck"></div>
         </figure>
         <div class="ch-copy">
@@ -111,7 +107,7 @@
       <h2 class="ch-title"><span class="ttl"><span class="line"><span class="line-inner">Carried</span></span><span class="anchor anchor--refused-title" id="a-refused-title"></span></span></h2>
       <div class="ch-body">
         <figure class="arch arch--refused">
-          <div class="arch-inner arch-inner--noble"><img src="assets/noble.webp" loading="lazy" decoding="async" alt="A Romanian boyar in a fur hat crowned with a feather" /></div>
+          <div class="arch-inner arch-inner--noble"><img data-src="assets/noble-640.webp" data-srcset="assets/noble-640.webp 640w, assets/noble.webp 900w" sizes="(max-width: 1024px) 76vw, 32vw" width="900" height="1125" decoding="async" alt="A Romanian boyar in a fur hat crowned with a feather" /></div>
           <div class="anchor anchor--refused" id="a-refused"></div>
         </figure>
         <div class="ch-copy">
@@ -128,11 +124,11 @@
     <section class="touch" id="contact">
       <div class="touch-stage">
         <div class="touch-art">
-          <div class="touch-copy touch-copy--l"><img src="assets/touch.webp" loading="lazy" decoding="async" alt="" /><img class="touch-blur" src="assets/touch-blur.webp" loading="lazy" decoding="async" alt="" /></div>
-          <div class="touch-copy touch-copy--r"><img src="assets/touch.webp" loading="lazy" decoding="async" alt="Two hands reaching toward a golden disc" /><img class="touch-blur" src="assets/touch-blur.webp" loading="lazy" decoding="async" alt="" /></div>
+          <div class="touch-copy touch-copy--l"><img data-src="assets/touch-960.webp" data-srcset="assets/touch-960.webp 960w, assets/touch.webp 1672w" sizes="(orientation: portrait) 132vw, 100vw" width="1672" height="941" decoding="async" alt="" /><img class="touch-blur" data-src="assets/touch-blur.webp" width="1672" height="941" decoding="async" alt="" /></div>
+          <div class="touch-copy touch-copy--r"><img data-src="assets/touch-960.webp" data-srcset="assets/touch-960.webp 960w, assets/touch.webp 1672w" sizes="(orientation: portrait) 132vw, 100vw" width="1672" height="941" decoding="async" alt="Two hands reaching toward a golden disc" /><img class="touch-blur" data-src="assets/touch-blur.webp" width="1672" height="941" decoding="async" alt="" /></div>
           <div class="anchor anchor--disc" id="a-disc"></div>
-          <img class="touch-hand touch-hand--l" src="assets/hand-left.webp" loading="lazy" decoding="async" alt="" />
-          <img class="touch-hand touch-hand--r" src="assets/hand-right.webp" loading="lazy" decoding="async" alt="" />
+          <img class="touch-hand touch-hand--l" data-src="assets/hand-left-640.webp" data-srcset="assets/hand-left-640.webp 640w, assets/hand-left.webp 1122w" sizes="(orientation: portrait) 70vw, 52vw" width="1122" height="1402" decoding="async" alt="" />
+          <img class="touch-hand touch-hand--r" data-src="assets/hand-right-640.webp" data-srcset="assets/hand-right-640.webp 640w, assets/hand-right.webp 1122w" sizes="(orientation: portrait) 70vw, 52vw" width="1122" height="1402" decoding="async" alt="" />
         </div>
         <div class="finale">
           <h2 class="finale-title">
@@ -153,9 +149,9 @@
     </section>
   </main>
 
-  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js"></script>
+  <script src="vendor/gsap.min.js" defer></script>
+  <script src="vendor/ScrollTrigger.min.js" defer></script>
+  <script src="vendor/lenis.min.js" defer></script>
   <script type="module" src="main.js"></script>
 </body>
 </html>

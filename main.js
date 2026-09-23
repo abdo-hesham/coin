@@ -38,20 +38,28 @@ const DISC = 0.82; // visible disc diameter relative to the CSS coin's image box
 }
 
 // one interface for both renderers
+// The CSS coin shows first (it costs nothing to start); the WebGL coin takes over after the
+// visitor's first interaction and the two cross-fade in the same pose.
 const coinView = {
   gl: null,
-  el: cssCoin,
+  cssMix: 1, // 1 = CSS coin visible, 0 = hidden
   z: null,
   set(x, y, d, rx, ry, rz, o, z) {
-    if (this.gl) {
-      this.gl.set(x, y, d, rx, ry, rz);
-    } else {
+    if (this.cssMix > 0) {
       const s = d / (COIN_BOX * DISC);
       cssCoin.style.transform = `translate3d(${(x - COIN_BOX / 2).toFixed(2)}px, ${(y - COIN_BOX / 2).toFixed(2)}px, 0) scale(${s.toFixed(4)})`;
       cssSpin.style.transform = `rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg) rotateZ(${rz.toFixed(2)}deg)`;
+      cssCoin.style.opacity = (o * this.cssMix).toFixed(3);
     }
-    this.el.style.opacity = o.toFixed(3);
-    if (this.z !== z) { this.el.style.zIndex = z; this.z = z; }
+    if (this.gl) {
+      this.gl.set(x, y, d, rx, ry, rz);
+      this.gl.canvas.style.opacity = o.toFixed(3);
+    }
+    if (this.z !== z) {
+      cssCoin.style.zIndex = z;
+      if (this.gl) this.gl.canvas.style.zIndex = z;
+      this.z = z;
+    }
   },
 };
 gsap.set([cssCoin, '#coinGL'], { opacity: 0 });
@@ -233,7 +241,7 @@ function buildScenes() {
     });
     const copy = $('.ch-copy', ch);
     gsap.timeline({ scrollTrigger: { trigger: copy, start: 'top 90%', end: 'top 50%', scrub: true } })
-      .fromTo($('.ch-lead', copy), { opacity: 0.08, y: 30 }, { opacity: 1, y: 0, ease: 'none' }, 0)
+      .fromTo($('.ch-lead', copy), { opacity: 0, y: 30 }, { opacity: 1, y: 0, ease: 'none' }, 0)
       .fromTo($('.ch-meta', copy), { opacity: 0 }, { opacity: 1, ease: 'none' }, 0.35)
       .fromTo($('.ch-sig', copy), { opacity: 0, y: 12 }, { opacity: 1, y: 0, ease: 'none' }, 0.5);
   });
@@ -494,7 +502,7 @@ function tickLoader() {
 
 function loadAssets() {
   // only what the first screen needs; everything below the fold is lazy and warmed up after the intro
-  const imgs = $$('img[src]').filter((img) => img.loading !== 'lazy');
+  const imgs = $$('img[src]');
   const tasks = imgs.length + 2;
   let done = 0;
   const tick = () => { done++; load.real = done / tasks; };
@@ -503,21 +511,51 @@ function loadAssets() {
       .then(() => (img.decode ? img.decode().catch(() => {}) : null))
       .then(tick)
   );
-  const fonts = (document.fonts ? document.fonts.ready : Promise.resolve()).then(tick);
-  const useCssCoin = () => {
-    $('#coinGL').style.display = 'none';
-    $$('img[data-src]', cssCoin).forEach((img) => { img.src = img.dataset.src; });
-  };
-  // never let a slow CDN hold the page hostage: fall back to the CSS coin after 4s
-  const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('WebGL coin timed out')), 4000));
-  const gl = Promise.race([
-    import('./coin3d.js').then((m) => m.createCoin3D($('#coinGL'), { front: 'assets/coin-tex-front.webp', back: 'assets/coin-tex-back.webp' })),
-    timeout,
-  ])
-    .then((c) => { coinView.gl = c; coinView.el = c.canvas; cssCoin.style.display = 'none'; })
-    .catch((err) => { console.warn('WebGL coin unavailable, using CSS coin.', err); useCssCoin(); })
-    .then(tick);
-  return Promise.all([...imgPromises, fonts, gl]);
+  const fonts = fontsReady().then(tick);
+  tick(); // (slot kept so the progress ring math stays the same)
+  return Promise.all([...imgPromises, fonts]);
+}
+
+// the font stylesheet loads asynchronously; wait for it, then for the faces the layout depends on
+function fontsReady() {
+  if (!document.fonts) return Promise.resolve();
+  const link = document.querySelector('link[rel="stylesheet"][href*="fonts.googleapis"]');
+  const sheet = new Promise((res) => {
+    if (!link || link.dataset.loaded || link.media === 'all') return res();
+    link.addEventListener('load', res, { once: true });
+    link.addEventListener('error', res, { once: true });
+  });
+  const faces = () => Promise.all(['300 40px Newsreader', '400 20px Newsreader', '400 20px "Pinyon Script"', '400 12px Inter'].map((f) => document.fonts.load(f)));
+  const timeout = new Promise((res) => setTimeout(res, 3000));
+  return Promise.race([sheet.then(faces), timeout]).catch(() => {});
+}
+
+// WebGL coin: loaded on the first interaction after the intro, so it never delays the first screen
+let glRequested = false;
+let introDone = false;
+function upgradeCoin() {
+  if (glRequested || !introDone || reduceMotion) return;
+  glRequested = true;
+  import('./coin3d.js')
+    .then((m) => m.createCoin3D($('#coinGL'), { front: 'assets/coin-tex-front.webp', back: 'assets/coin-tex-back.webp' }))
+    .then((c) => {
+      c.canvas.style.opacity = 0;
+      c.canvas.style.zIndex = coinView.z;
+      coinView.gl = c;
+      gsap.to(coinView, { cssMix: 0, duration: 0.45, ease: 'power1.inOut', onComplete: () => { cssCoin.style.display = 'none'; } });
+    })
+    .catch((err) => { console.warn('WebGL coin unavailable, keeping the CSS coin.', err); $('#coinGL').style.display = 'none'; });
+}
+const INTERACTIONS = ['pointermove', 'pointerdown', 'touchstart', 'wheel', 'keydown', 'scroll'];
+INTERACTIONS.forEach((ev) => addEventListener(ev, onFirstInteraction, { passive: true }));
+let interacted = false;
+function onFirstInteraction() {
+  interacted = true;
+  if (introDone) {
+    INTERACTIONS.forEach((ev) => removeEventListener(ev, onFirstInteraction));
+    upgradeCoin();
+    warmLazyImages();
+  }
 }
 
 function startIntro() {
@@ -529,24 +567,41 @@ function startIntro() {
   intro.from = { x: r.left + r.width / 2, y: r.top + r.height / 2, d: r.width * DISC_LOADER, ry: spinY };
   intro.p = 0;
   intro.active = true;
-  gsap.set(coinView.el, { opacity: 1 });
-  gsap.set(loaderCoin, { opacity: 0 });
+    gsap.set(loaderCoin, { opacity: 0 });
 
   const tl = gsap.timeline({
-    onComplete: () => { intro.active = false; loaderEl.style.display = 'none'; warmLazyImages(); },
+    onComplete: () => { intro.active = false; loaderEl.style.display = 'none'; introDone = true; if (interacted) onFirstInteraction(); },
   });
   tl.to(['.loader-word', '.loader-pct'], { opacity: 0, y: -10, duration: 0.4 * d, ease: 'power2.in', stagger: 0.04 }, 0)
-    .to(loaderEl, { backgroundColor: 'rgba(0,0,0,0)', duration: 0.7 * d, ease: 'power2.inOut' }, 0.1 * d)
+    .to(loaderEl, { opacity: 0, duration: 0.7 * d, ease: 'power2.inOut' }, 0.1 * d)
     .to(intro, { p: 1, duration: 1.5 * d, ease: 'none' }, 0.05 * d)
-    .fromTo('.h-layer img', { opacity: 0, scale: 1.12 }, { opacity: 1, scale: 1, duration: 2 * d, ease: 'expo.out', stagger: 0.08 * d }, 0.25 * d)
+    .fromTo('.h-layer img', { scale: 1.12 }, { scale: 1, duration: 2 * d, ease: 'expo.out', stagger: 0.08 * d }, 0.1 * d)
     .from('.hero-title .line-inner', { yPercent: 110, duration: 1.4 * d, ease: 'expo.out', stagger: 0.12 * d }, 0.5 * d)
     .from('.nav', { opacity: 0, y: -14, duration: 1 * d, ease: 'power3.out' }, 0.7 * d);
   gsap.delayedCall(0.9 * d, () => { document.body.classList.remove('is-loading'); lenis && lenis.start(); });
 }
 // fetch below-the-fold images while the visitor is still reading the hero
+// below-the-fold images carry data-src/data-srcset and are fetched once the visitor starts
+// scrolling (or when one gets near the viewport), so they never compete with the first screen
+const deferredImgs = $$('img[data-src]');
+const loadImg = (img) => {
+  if (!img.dataset.src) return;
+  if (img.dataset.srcset) img.srcset = img.dataset.srcset;
+  img.src = img.dataset.src;
+  delete img.dataset.src; delete img.dataset.srcset;
+};
+let warmed = false;
 function warmLazyImages() {
-  const go = () => $$('img[loading="lazy"]').forEach((img) => { img.loading = 'eager'; });
-  if ('requestIdleCallback' in window) requestIdleCallback(go, { timeout: 1500 }); else setTimeout(go, 600);
+  if (warmed) return;
+  warmed = true;
+  const go = () => deferredImgs.forEach(loadImg);
+  if ('requestIdleCallback' in window) requestIdleCallback(go, { timeout: 1000 }); else setTimeout(go, 300);
+}
+if ('IntersectionObserver' in window) {
+  const io = new IntersectionObserver((entries) => entries.forEach((e) => {
+    if (e.isIntersecting) { loadImg(e.target); io.unobserve(e.target); }
+  }), { rootMargin: '150% 0px' });
+  deferredImgs.forEach((img) => io.observe(img));
 }
 // loader coin artwork sits inside its image box the same way as the CSS coin
 const DISC_LOADER = DISC;
@@ -554,13 +609,21 @@ const DISC_LOADER = DISC;
 /* ---------------- boot ---------------- */
 gsap.ticker.add(() => { updateCoin(); updateLayers(); });
 
-loadAssets().then(() => {
+// hand control back to the browser between heavy setup steps so no single task blocks for long
+const yieldToMain = () => new Promise((res) => setTimeout(res, 0));
+
+loadAssets().then(async () => {
   window.scrollTo(0, 0);
+  gsap.set('.h-layer img', { scale: 1.12 });
+  await yieldToMain();
   buildLines();
+  await yieldToMain();
   buildScenes();
+  await yieldToMain();
   ScrollTrigger.addEventListener('refreshInit', () => lines.forEach((ln) => gsap.set([ln.l, ln.r], { x: 0 })));
   ScrollTrigger.addEventListener('refresh', () => { measureLines(); computeStops(); });
   ScrollTrigger.refresh();
+  await yieldToMain();
   const wait = () => (load.shown >= 1 ? startIntro() : requestAnimationFrame(wait));
   wait();
 });
@@ -569,6 +632,14 @@ loadAssets().then(() => {
   tickLoader();
   requestAnimationFrame(loaderLoop);
 })();
+
+if (document.fonts) {
+  document.fonts.addEventListener('loadingdone', () => {
+    if (!lines.length) return;
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => { buildLines(); ScrollTrigger.refresh(); }, 120);
+  });
+}
 
 let resizeTimer;
 let lastW = innerWidth;

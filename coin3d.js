@@ -3,7 +3,7 @@
    so scrolling only costs a compositor transform. WebGL re-renders only when the coin's
    rotation actually changes. */
 import * as THREE from 'three';
-import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { RoomEnvironment } from './vendor/RoomEnvironment.js';
 
 const DEG = Math.PI / 180;
 const THICKNESS = 0.085; // relative to radius

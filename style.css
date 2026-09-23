@@ -1,8 +1,8 @@
 :root {
   --bg: #000;
   --ink: #f4f1ea;
-  --ink-dim: rgba(244, 241, 234, 0.55);
-  --ink-faint: rgba(244, 241, 234, 0.32);
+  --ink-dim: rgba(244, 241, 234, 0.66);
+  --ink-faint: rgba(244, 241, 234, 0.56);
   --gold: #b8904a;
   --serif: "Newsreader", "Times New Roman", serif;
   --script: "Pinyon Script", cursive;
@@ -294,7 +294,7 @@ h1, h2, p, figure { margin: 0; }
   display: flex; justify-content: space-between;
   align-items: center;
   font-family: var(--sans); font-size: 10px; letter-spacing: 0.03em;
-  color: rgba(255, 255, 255, 0.45);
+  color: rgba(255, 255, 255, 0.62);
 }
 .finale-social {
   display: inline-flex; align-items: center; gap: 8px;
