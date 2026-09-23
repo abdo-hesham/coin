@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Still Carried — A Romanian Heirloom</title>
+  <meta name="description" content="Romanian culture survives because every generation leaves something behind for the next — the story of one coin, passed from hand to hand." />
+  <link rel="icon" href="assets/logo-coin.webp" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Newsreader:opsz,wght@6..72,200;6..72,300;6..72,400&family=Pinyon+Script&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <script type="importmap">
+    { "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    } }
+  </script>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="preload" as="image" href="assets/coin-front-sm.webp" fetchpriority="high" />
+  <link rel="preload" as="image" href="assets/coin-tex-front.webp" />
+  <link rel="preload" as="image" href="assets/coin-tex-back.webp" />
+  <link rel="preload" as="image" href="assets/column-dark.webp" />
+  <link rel="preload" as="image" href="assets/noble-dark.webp" />
+  <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js" />
+  <link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/environments/RoomEnvironment.js" />
+</head>
+<body>
+  <div class="loader" aria-hidden="true">
+    <div class="loader-stage">
+      <div class="loader-coin">
+        <img class="loader-coin-face" src="assets/coin-front-sm.webp" alt="" fetchpriority="high" />
+        <img class="loader-coin-face loader-coin-face--back" src="assets/coin-back-sm.webp" alt="" />
+      </div>
+    </div>
+    <p class="loader-word"><span>Still</span><em>carried</em></p>
+    <p class="loader-pct"><span class="loader-num">0</span><sup>%</sup></p>
+  </div>
+
+  <header class="nav">
+    <nav class="nav-group">
+      <a href="#about">About</a>
+      <a href="#story">Story</a>
+    </nav>
+    <a class="nav-logo" href="#top" aria-label="Home"><img src="assets/logo-coin.webp" alt="" width="40" height="40" fetchpriority="high" /></a>
+    <nav class="nav-group nav-group--right">
+      <a href="#journal">Journal</a>
+      <a href="#contact">Contact</a>
+    </nav>
+  </header>
+
+  <!-- The one coin that travels through the whole page: WebGL when available, CSS 3D fallback -->
+  <canvas class="coin-gl" id="coinGL" aria-hidden="true"></canvas>
+  <div class="coin" id="coin" aria-hidden="true">
+    <div class="coin-spin">
+      <div class="coin-edge"></div>
+      <div class="coin-face coin-face--front"><img data-src="assets/coin-front-sm.webp" alt="" /></div>
+      <div class="coin-face coin-face--back"><img data-src="assets/coin-back-sm.webp" alt="" /></div>
+    </div>
+  </div>
+
+  <main id="top">
+    <!-- HERO -->
+    <section class="hero" id="about">
+      <div class="hero-layers">
+        <div class="h-layer h-column" data-depth="0.35"><img src="assets/column-dark.webp" fetchpriority="high" alt="" /></div>
+        <div class="h-layer h-noble" data-depth="0.25"><img src="assets/noble-dark.webp" fetchpriority="high" alt="" /></div>
+        <div class="h-layer h-carpet" data-depth="0.6"><img src="assets/carpet-dark.webp" fetchpriority="high" alt="" /></div>
+        <div class="h-layer h-stone" data-depth="0.7"><img src="assets/stone-dark.webp" fetchpriority="high" alt="" /></div>
+        <div class="hero-vignette"></div>
+      </div>
+      <h1 class="hero-title">
+        <span class="line"><span class="line-inner">Still</span></span>
+        <span class="line"><span class="line-inner">carried.</span></span>
+      </h1>
+      <div class="anchor anchor--hero" id="a-hero"></div>
+      <div class="anchor anchor--hero2" id="a-hero2"></div>
+    </section>
+
+    <!-- TURNED + STORY PARAGRAPH -->
+    <section class="turned" id="story">
+      <h2 class="turned-title">
+        <span class="line"><span class="line-inner">Passed by hand</span></span>
+        <span class="line"><span class="line-inner">still passing</span></span>
+      </h2>
+      <div class="anchor anchor--turned" id="a-turned"></div>
+
+      <div class="story">
+        <p class="story-text" id="storyText">This coin was struck by hand in the workshop of <em>Andrei of Sibiu</em>, somewhere in the Carpathians where the Dacians once raised wolf banners, from a blank of silver that had already lived one life as a bride's earring. The wolf on its face was cut into the die by an apprentice whose name nobody wrote down, and the strike landed a little off centre, as they often did. It passed through the purse of <em>Ion the shepherd</em>, sewn into a wedding shirt in <em>Maramureș</em>, and was hidden beneath a church floor for two hundred years. A weaver's granddaughter, <em>Ileana Popescu</em>, found it in the spring of <em>1918</em> and kept it in her dowry chest under embroidered linen. The high points wore smooth against her thumb. Every scratch on it is a hand it has known, and every hand left something behind for the next.</p>
+      </div>
+    </section>
+
+    <!-- CHAPTER: STRUCK -->
+    <section class="chapter chapter--struck" id="journal">
+      <h2 class="ch-title"><span class="line"><span class="line-inner">Forged</span></span></h2>
+      <div class="ch-body">
+        <figure class="arch arch--struck">
+          <div class="arch-inner"><img src="assets/workshop.webp" loading="lazy" decoding="async" alt="A craftsman striking coins at his workbench by candlelight" /></div>
+          <div class="anchor anchor--struck" id="a-struck"></div>
+        </figure>
+        <div class="ch-copy">
+          <p class="ch-lead">No one taught the wolf to howl. An old master's hammer did — and the lesson outlived the master himself.</p>
+          <p class="ch-meta">sibiu · c. 1700</p>
+          <p class="ch-sig">Andrei of Sibiu</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- CHAPTER: REFUSED -->
+    <section class="chapter chapter--refused">
+      <h2 class="ch-title"><span class="ttl"><span class="line"><span class="line-inner">Carried</span></span><span class="anchor anchor--refused-title" id="a-refused-title"></span></span></h2>
+      <div class="ch-body">
+        <figure class="arch arch--refused">
+          <div class="arch-inner arch-inner--noble"><img src="assets/noble.webp" loading="lazy" decoding="async" alt="A Romanian boyar in a fur hat crowned with a feather" /></div>
+          <div class="anchor anchor--refused" id="a-refused"></div>
+        </figure>
+        <div class="ch-copy">
+          <p class="ch-lead">The boyar counts every coin before winter. What his hands cannot keep, his children will — it goes on to the living.</p>
+          <p class="ch-meta">the inheritance · carried</p>
+          <p class="ch-sig">Vornic Radu</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="spacer"></div>
+
+    <!-- TOUCH / FINALE (pinned) -->
+    <section class="touch" id="contact">
+      <div class="touch-stage">
+        <div class="touch-art">
+          <div class="touch-copy touch-copy--l"><img src="assets/touch.webp" loading="lazy" decoding="async" alt="" /><img class="touch-blur" src="assets/touch-blur.webp" loading="lazy" decoding="async" alt="" /></div>
+          <div class="touch-copy touch-copy--r"><img src="assets/touch.webp" loading="lazy" decoding="async" alt="Two hands reaching toward a golden disc" /><img class="touch-blur" src="assets/touch-blur.webp" loading="lazy" decoding="async" alt="" /></div>
+          <div class="anchor anchor--disc" id="a-disc"></div>
+          <img class="touch-hand touch-hand--l" src="assets/hand-left.webp" loading="lazy" decoding="async" alt="" />
+          <img class="touch-hand touch-hand--r" src="assets/hand-right.webp" loading="lazy" decoding="async" alt="" />
+        </div>
+        <div class="finale">
+          <h2 class="finale-title">
+            <span class="line"><span class="line-inner">It lives</span></span>
+            <span class="line"><span class="line-inner">on.</span></span>
+            <span class="anchor anchor--final" id="a-final"></span>
+          </h2>
+        </div>
+        <footer class="finale-foot">
+          <span>left behind for the next one</span>
+          <a class="finale-social" href="https://www.instagram.com/ah.uiux/" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4.2" /><circle class="dot" cx="17.3" cy="6.7" r="1" /></svg>
+            <span>Instagram</span>
+          </a>
+          <span>romania · still carried</span>
+        </footer>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js"></script>
+  <script type="module" src="main.js"></script>
+</body>
+</html>
