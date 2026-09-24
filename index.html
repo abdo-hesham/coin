@@ -6,7 +6,6 @@
   <title>Still Carried — A Romanian Heirloom</title>
   <meta name="description" content="Romanian culture survives because every generation leaves something behind for the next — the story of one coin, passed from hand to hand." />
   <link rel="icon" href="assets/logo-coin.webp" />
-  <noscript></noscript>
   <link rel="preload" as="font" type="font/woff2" href="fonts/newsreader-200-400.woff2" crossorigin />
   <!-- styles and self-hosted font faces are inlined: no render-blocking requests -->
   <style>
@@ -79,8 +78,15 @@
     @keyframes loader-spin { to { transform: rotateY(360deg); } }
     @keyframes loader-float { from { translate: 0 -4px; } to { translate: 0 4px; } }
     @keyframes loader-in { from { opacity: 0; transform: translateY(14px); } }
-    .loader-coin-face { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
-    .loader-coin-face--back { transform: rotateY(180deg) scale(0.885); }
+    /* both sides of the coin come from one image (front | back), so the back is decoded the moment the front is
+       and can never show up blank or white while it turns */
+    .loader-coin-face, .coin-face {
+      position: absolute; inset: 0;
+      background: url(assets/coin-faces-sm.webp) 0 0 / 200% 100% no-repeat;
+      backface-visibility: hidden; -webkit-backface-visibility: hidden;
+    }
+    .loader-coin-face--back, .coin-face--back { background-position: 100% 0; }
+    .loader-coin-face--back { transform: rotateY(180deg); }
     .loader-word {
       display: flex; gap: 0.45em; align-items: baseline;
       font-family: var(--serif); font-weight: 300; font-size: clamp(15px, 1.4vw, 20px); letter-spacing: 0.02em;
@@ -141,13 +147,6 @@
       transform-style: preserve-3d;
       will-change: transform;
     }
-    .coin-face {
-      position: absolute; inset: 0;
-      backface-visibility: hidden; -webkit-backface-visibility: hidden;
-    }
-    .coin-face img { width: 100%; height: 100%; object-fit: contain; }
-    /* back artwork sits a little larger in its canvas, so match the front's disc */
-    .coin-face--back img { transform: scale(0.885); }
     .coin-edge { position: absolute; inset: 0; transform-style: preserve-3d; }
     .coin-edge i {
       position: absolute; left: 11%; top: 12%; width: 78%; height: 76%;
@@ -250,8 +249,9 @@
     }
     .arch-inner--noble img { object-fit: contain; object-position: 50% 100%; transform-origin: 50% 100%; }
 
-    .anchor--struck { left: 62%; top: 88%; width: 12%; }
-    .anchor--refused { left: 38%; top: 71%; width: 13%; }
+    /* in % of the picture: the flat wolf coin on the workbench, and the boyar's round brooch */
+    .anchor--struck { left: 63.9%; top: 88.5%; width: 15.75%; }
+    .anchor--refused { left: 39.8%; top: 69.9%; width: 12.2%; }
     .anchor--refused-title { left: -0.3em; top: 56%; width: 0.4em; }
 
     .ch-copy { position: absolute; top: 34%; width: min(28vw, 420px); }
@@ -277,7 +277,9 @@
 
     /* ---------- touch / finale ---------- */
     .touch { position: relative; z-index: 10; height: 100vh; }
-    .touch-stage { position: relative; width: 100%; height: 100vh; overflow: hidden; background: #000; }
+    /* transparent on purpose: on portrait screens the painting is a band in the middle of the stage,
+       and an opaque stage would hide the coin before the painting reaches it */
+    .touch-stage { position: relative; width: 100%; height: 100vh; overflow: hidden; }
     /* the painting box keeps the image's own aspect ratio; JS sets its size (cover on landscape, wide band on portrait) */
     .touch-art {
       position: absolute; left: 50%; top: 50%;
@@ -288,21 +290,14 @@
     .touch-copy { position: absolute; inset: 0; will-change: transform, opacity; }
     .touch-copy img { position: absolute; inset: 0; width: 100%; height: 100%; }
     .anchor--disc { left: 49.94%; top: 41.98%; width: calc(var(--art-h, 56.25vw) * 0.2); }
-    /* clean arm cut-outs, placed over the painted arms (positions in % of the painting) */
+    /* the painting is only the backdrop; the arms are separate cut-outs (positions in % of the painting).
+       Both sleeves run past the painting's edges, and both arms live in one layer so they share the frame's clip */
+    .touch-hands { position: absolute; inset: 0; will-change: clip-path; }
     .touch-hand { position: absolute; height: auto; max-width: none; }
     .touch-hand--l { left: -1.79%; top: -17%; width: 51.67%; }
-    .touch-hand--r { left: 49.94%; top: 17.75%; width: 46.29%; }
+    .touch-hand--r { left: 49.77%; top: 13.37%; width: 52.5%; }
     .touch-blur { opacity: 0; will-change: opacity; }
     .touch-hand { will-change: transform, opacity; }
-    /* the sleeves are cut straight at the image edge: fade that end out */
-    .touch-hand--l {
-      -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 16%);
-      mask-image: linear-gradient(to right, transparent 0%, #000 16%);
-    }
-    .touch-hand--r {
-      -webkit-mask-image: linear-gradient(to left, transparent 0%, #000 16%);
-      mask-image: linear-gradient(to left, transparent 0%, #000 16%);
-    }
 
     .finale {
       position: absolute; inset: 0; z-index: 3;
@@ -398,15 +393,15 @@
         "three": "./vendor/three.module.min.js"
     } }
   </script>
-  <link rel="preload" as="image" href="assets/coin-front-sm.webp" fetchpriority="high" />
+  <link rel="preload" as="image" href="assets/coin-faces-sm.webp" fetchpriority="high" />
   <link rel="preload" as="image" href="assets/carpet-dark-560.webp" imagesrcset="assets/carpet-dark-560.webp 560w, assets/carpet-dark-760.webp 760w, assets/carpet-dark.webp 1000w" imagesizes="(max-width: 760px) 76vw, 56vw" fetchpriority="high" />
 </head>
 <body class="is-loading">
   <div class="loader" aria-hidden="true">
     <div class="loader-stage">
       <div class="loader-coin">
-        <img class="loader-coin-face" src="assets/coin-front-sm.webp" alt="" width="360" height="360" fetchpriority="high" />
-        <img data-hero class="loader-coin-face loader-coin-face--back" data-src="assets/coin-back-sm.webp" alt="" width="360" height="360" />
+        <div class="loader-coin-face"></div>
+        <div class="loader-coin-face loader-coin-face--back"></div>
       </div>
     </div>
     <p class="loader-word"><span>Still</span><em>carried</em></p>
@@ -430,8 +425,8 @@
   <div class="coin" id="coin" aria-hidden="true">
     <div class="coin-spin">
       <div class="coin-edge"></div>
-      <div class="coin-face coin-face--front"><img src="assets/coin-front-sm.webp" alt="" width="360" height="360" /></div>
-      <div class="coin-face coin-face--back"><img data-hero data-src="assets/coin-back-sm.webp" alt="" width="360" height="360" /></div>
+      <div class="coin-face coin-face--front"></div>
+      <div class="coin-face coin-face--back"></div>
     </div>
   </div>
 
@@ -504,11 +499,13 @@
     <section class="touch" id="contact">
       <div class="touch-stage">
         <div class="touch-art">
-          <div class="touch-copy touch-copy--l"><img data-src="assets/touch-960.webp" data-srcset="assets/touch-960.webp 960w, assets/touch.webp 1672w" sizes="(orientation: portrait) 132vw, 100vw" width="1672" height="941" decoding="async" alt="" /><img class="touch-blur" data-src="assets/touch-blur.webp" width="1672" height="941" decoding="async" alt="" /></div>
-          <div class="touch-copy touch-copy--r"><img data-src="assets/touch-960.webp" data-srcset="assets/touch-960.webp 960w, assets/touch.webp 1672w" sizes="(orientation: portrait) 132vw, 100vw" width="1672" height="941" decoding="async" alt="Two hands reaching toward a golden disc" /><img class="touch-blur" data-src="assets/touch-blur.webp" width="1672" height="941" decoding="async" alt="" /></div>
+          <div class="touch-copy touch-copy--l"><img data-src="assets/wall-960.webp" data-srcset="assets/wall-960.webp 960w, assets/wall.webp 1672w" sizes="(orientation: portrait) 132vw, 100vw" width="1672" height="941" decoding="async" alt="" /><img class="touch-blur" data-src="assets/wall-blur.webp" width="1672" height="941" decoding="async" alt="" /></div>
+          <div class="touch-copy touch-copy--r"><img data-src="assets/wall-960.webp" data-srcset="assets/wall-960.webp 960w, assets/wall.webp 1672w" sizes="(orientation: portrait) 132vw, 100vw" width="1672" height="941" decoding="async" alt="A golden disc on a cracked painted wall" /><img class="touch-blur" data-src="assets/wall-blur.webp" width="1672" height="941" decoding="async" alt="" /></div>
           <div class="anchor anchor--disc" id="a-disc"></div>
-          <img class="touch-hand touch-hand--l" data-src="assets/hand-left-640.webp" data-srcset="assets/hand-left-640.webp 640w, assets/hand-left.webp 1122w" sizes="(orientation: portrait) 70vw, 52vw" width="1122" height="1402" decoding="async" alt="" />
-          <img class="touch-hand touch-hand--r" data-src="assets/hand-right-640.webp" data-srcset="assets/hand-right-640.webp 640w, assets/hand-right.webp 1122w" sizes="(orientation: portrait) 70vw, 52vw" width="1122" height="1402" decoding="async" alt="" />
+          <div class="touch-hands">
+            <img class="touch-hand touch-hand--l" data-src="assets/hand-left-640.webp" data-srcset="assets/hand-left-640.webp 640w, assets/hand-left.webp 1122w" sizes="(orientation: portrait) 70vw, 52vw" width="1122" height="1402" decoding="async" alt="" />
+            <img class="touch-hand touch-hand--r" data-src="assets/hand-right-640.webp" data-srcset="assets/hand-right-640.webp 640w, assets/hand-right.webp 1122w" sizes="(orientation: portrait) 70vw, 52vw" width="1122" height="1402" decoding="async" alt="" />
+          </div>
         </div>
         <div class="finale">
           <h2 class="finale-title">
@@ -538,7 +535,7 @@
         libs.forEach(function (src) {
           var s = document.createElement('script');
           s.src = src; s.async = false;
-          s.onload = s.onerror = function () { if (--left === 0) import('./main.js'); };
+          s.onload = s.onerror = function () { if (--left === 0) import('./main.js?v=20260924d'); };
           document.head.appendChild(s);
         });
       }

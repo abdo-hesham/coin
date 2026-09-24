@@ -247,12 +247,16 @@ function buildScenes() {
 
   // TOUCH / FINALE (pinned)
   const insetStr = (t, r, b, l) => `inset(${t}% ${r}% ${b}% ${l}%)`;
-  const clip = { t: 0, s: 0, b: 0, gap: 0 };
+  // open: 0 = arms clipped to the frame (so each hand shows once), 1 = arms free to leave it
+  const clip = { t: 0, s: 0, b: 0, gap: 0, open: 0 };
   const cl = $('.touch-copy--l');
   const cr = $('.touch-copy--r');
+  const hands = $('.touch-hands');
   const applyClip = () => {
     cl.style.clipPath = insetStr(clip.t, 50 + clip.gap - 0.02, clip.b, clip.s);
     cr.style.clipPath = insetStr(clip.t, clip.s, clip.b, 50 + clip.gap - 0.02);
+    const o = clip.open * 80;
+    hands.style.clipPath = insetStr(clip.t - o, clip.s - o, clip.b - o, clip.s - o);
   };
   applyClip();
   gsap.set('.finale-title .line-inner', { yPercent: 35, opacity: 0 });
@@ -270,6 +274,7 @@ function buildScenes() {
     .to('.touch-art', { scale: 0.9, y: () => innerHeight * 0.03, duration: 3.2, ease: 'power2.inOut' }, 0)
     // split
     .to(clip, { gap: 3.5, duration: 2.3, ease: 'power2.inOut', onUpdate: applyClip }, TOUCH.splitIn)
+    .to(clip, { open: 1, duration: 1.2, ease: 'power1.in', onUpdate: applyClip }, TOUCH.splitIn)
     .to(cl, { x: () => -innerWidth * 0.025, duration: 2.3, ease: 'power2.inOut' }, TOUCH.splitIn)
     .to(cr, { x: () => innerWidth * 0.025, duration: 2.3, ease: 'power2.inOut' }, TOUCH.splitIn)
     .to('.touch-blur', { opacity: 1, duration: 1.6, ease: 'power1.inOut' }, TOUCH.splitIn)
@@ -303,6 +308,24 @@ function liveStop(el) {
   get.docY = () => { const r = el.getBoundingClientRect(); return r.top + r.height / 2 + window.scrollY; };
   return get;
 }
+// an anchor that sits on a detail of a picture: the picture scales while it scrolls,
+// so the spot is read from the image's live (transformed) box. The anchor's own CSS
+// position (in % of the frame) says where the detail is; its measured spot sets the timing
+function pictureStop(el) {
+  const img = el.parentElement.querySelector('img');
+  const at = staticStop(el);
+  const get = () => {
+    const f = el.offsetParent;
+    const r = img.getBoundingClientRect();
+    return {
+      x: r.left + (el.offsetLeft / f.offsetWidth) * r.width,
+      y: r.top + (el.offsetTop / f.offsetHeight) * r.height,
+      d: (el.offsetWidth / f.offsetWidth) * r.width,
+    };
+  };
+  get.docY = at.docY;
+  return get;
+}
 function measureAnchors() {
   const sy = window.scrollY;
   staticAnchors.forEach((a) => {
@@ -315,9 +338,9 @@ const G = {
   hero: staticStop($('#a-hero')),
   hero2: staticStop($('#a-hero2')),
   turned: staticStop($('#a-turned')),
-  struck: staticStop($('#a-struck')),
+  struck: pictureStop($('#a-struck')),
   refTitle: liveStop($('#a-refused-title')),
-  refused: staticStop($('#a-refused')),
+  refused: pictureStop($('#a-refused')),
   disc: liveStop($('#a-disc')),
   final: liveStop($('#a-final')),
 };
@@ -346,14 +369,17 @@ function computeStops() {
       leave: storyBottom - vh * 0.5,
       ry: 360, rz: 0, rzOut: 40,
     },
-    { get: G.struck, at: when(G.struck, 0.68), leave: when(G.struck, 0.44), rx: 6, ry: 720, rz: 28 },
+    // comes down from above and lays flat on the painted coin on the workbench (same spot, size and tilt)
+    { get: G.struck, at: when(G.struck, 0.68), leave: when(G.struck, 0.44), rx: 64, ry: 720, rz: 0, land: true },
     // forged -> carried curves past the "Carried" title, edge-on as it goes by
-    { get: G.refused, at: when(G.refused, 0.5), leave: when(G.refused, 0.3), rx: 8, ry: 1080, rz: 10, via: G.refTitle, viaRy: 810 },
+    // ...then settles into the boyar's brooch, filling it exactly
+    { get: G.refused, at: when(G.refused, 0.5), leave: when(G.refused, 0.3), rx: 4, ry: 1080, rz: 0, via: G.refTitle, viaRy: 810 },
     {
       get: () => ({ x: vw / 2, y: vh * 0.46, d: Math.min(vw * (small ? 0.24 : 0.105), vh * 0.22) }),
       at: tStart - vh * 0.72, leave: tStart - vh * 0.5, ry: 1440, rz: 0,
     },
-    { get: G.disc, at: tStart - vh * 0.02, leave: tAt(TOUCH.splitIn), ry: 1440 + 160, o: 0 },
+    // slides under the rising painting at full opacity and only switches off once it is covered
+    { get: G.disc, at: tStart - vh * 0.02, leave: tAt(TOUCH.splitIn), ry: 1440 + 160, o: 0, hideOnArrival: true },
     { get: G.disc, at: tAt(TOUCH.coinIn), hold: tLen * 0.02, ry: 1800, o: 1, z: 30 },
     { get: G.final, at: tAt(TOUCH.finalAt), leave: Infinity, ry: 1800 + 360, rx: 4, z: 30, spin: true },
   ];
@@ -417,11 +443,12 @@ function updateCoin() {
     x = q(ra.x, v.x, rb.x); cy = q(ra.y, v.y, rb.y); d = Math.max(1, q(ra.d, v.d, rb.d));
     rx = lerp(a.rx, b.rx, t); rz = lerp(aRzOut, b.rz, t);
     ry = t < 0.5 ? lerp(a.ry, b.viaRy, t * 2) : lerp(b.viaRy, b.ry, (t - 0.5) * 2);
-    o = lerp(a.o, b.o, t); z = t < 0.5 ? a.z : b.z;
+    o = b.hideOnArrival ? (t < 1 ? a.o : b.o) : lerp(a.o, b.o, t); z = t < 0.5 ? a.z : b.z;
   } else if (b) {
     x = lerp(ra.x, rb.x, t); cy = lerp(ra.y, rb.y, t); d = lerp(ra.d, rb.d, t);
-    rx = lerp(a.rx, b.rx, t); ry = lerp(a.ry, b.ry, t); rz = lerp(aRzOut, b.rz, t);
-    o = lerp(a.o, b.o, t); z = t < 0.5 ? a.z : b.z;
+    // landing: stays upright while it falls and tips flat at the end
+    rx = lerp(a.rx, b.rx, b.land ? t * t * t : t); ry = lerp(a.ry, b.ry, t); rz = lerp(aRzOut, b.rz, t);
+    o = b.hideOnArrival ? (t < 1 ? a.o : b.o) : lerp(a.o, b.o, t); z = t < 0.5 ? a.z : b.z;
   } else {
     x = ra.x; cy = ra.y; d = ra.d; rx = a.rx; ry = a.ry; rz = lerp(a.rz, aRzOut, hp); o = a.o; z = a.z;
   }
@@ -519,8 +546,11 @@ function loadAssets() {
       .then(tick)
   );
   const fonts = fontsReady().then(tick);
-  tick(); // (slot kept so the progress ring math stays the same)
-  return Promise.all([...imgPromises, fonts]);
+  // the coin's two faces (one CSS background image): decoded before the intro so neither side can flash blank
+  const faces = new Image();
+  faces.src = 'assets/coin-faces-sm.webp';
+  const coinFaces = (faces.decode ? faces.decode() : new Promise((res) => { faces.onload = res; })).catch(() => {}).then(tick);
+  return Promise.all([...imgPromises, fonts, coinFaces]);
 }
 
 // the font stylesheet loads asynchronously; wait for it, then for the faces the layout depends on
@@ -549,6 +579,17 @@ function upgradeCoin() {
       c.canvas.style.opacity = 0;
       c.canvas.style.zIndex = coinView.z;
       coinView.gl = c;
+      // mobile browsers can drop the WebGL context (memory pressure, tab switch): fall back to the CSS coin
+      // instead of leaving an empty or white canvas
+      c.canvas.addEventListener('webglcontextlost', (e) => {
+        e.preventDefault();
+        gsap.killTweensOf(coinView);
+        coinView.gl = null;
+        c.canvas.style.display = 'none';
+        cssCoin.style.display = '';
+        coinView.cssMix = 1;
+        coinView.z = null;
+      }, { once: true });
       gsap.to(coinView, { cssMix: 0, duration: 0.45, ease: 'power1.inOut', onComplete: () => { cssCoin.style.display = 'none'; } });
     })
     .catch((err) => { console.warn('WebGL coin unavailable, keeping the CSS coin.', err); $('#coinGL').style.display = 'none'; });
